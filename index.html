@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile Notification Tester</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        ocean: {
+                            900: '#07111e',
+                            800: '#0c1b2a',
+                            700: '#132840',
+                            600: '#1d3b5c',
+                            500: '#28517c',
+                            400: '#3d74ab',
+                            300: '#649ad3',
+                            200: '#9ac2ec',
+                            100: '#cfe2f8',
+                        },
+                        cyan: {
+                            400: '#22d3ee',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom scrollbar for clean dark look */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0c1b2a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1d3b5c;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #28517c;
+        }
+    </style>
+</head>
+<body class="bg-ocean-900 text-ocean-100 min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-ocean-900">
+
+    <header class="bg-ocean-800/80 backdrop-blur-md border-b border-ocean-700 sticky top-0 z-30 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-ocean-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 text-ocean-900 font-bold text-lg">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-base tracking-tight text-white">NotiPing</h1>
+                <p class="text-xs text-ocean-300">Mobile Alert Lab</p>
+            </div>
+        </div>
+        <div id="permissionBadge" class="flex items-center space-x-2 px-3 py-1 rounded-full bg-ocean-700/60 border border-ocean-600 text-xs font-medium">
+            <span id="permissionDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span id="permissionText">Checking...</span>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-md w-full mx-auto px-4 py-5 space-y-5 pb-24">
+
+        <!-- Notification Permission Card -->
+        <section id="permissionCard" class="bg-ocean-800 border border-ocean-700 rounded-2xl p-4 shadow-xl relative overflow-hidden transition-all">
+            <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="flex items-start justify-between">
+                <div>
+                    <h2 class="font-semibold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-cyan-400"></i> Push Permissions
+                    </h2>
+                    <p id="permissionDesc" class="text-xs text-ocean-300 mt-1">
+                        Browser notifications allow alerts to reach your phone screen even when minimized.
+                    </p>
+                </div>
+            </div>
+            <div class="mt-4 flex gap-2">
+                <button id="requestBtn" onclick="requestPermission()" class="flex-1 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-ocean-900 font-semibold py-2.5 px-4 rounded-xl text-sm shadow-lg shadow-cyan-500/20 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-lock-open"></i> Enable Notifications
+                </button>
+                <button onclick="triggerImmediateTest()" class="bg-ocean-700 hover:bg-ocean-600 text-cyan-400 font-medium py-2.5 px-4 rounded-xl text-sm transition border border-ocean-600 flex items-center justify-center gap-1.5" title="Test Notification Now">
+                    <i class="fa-solid fa-paper-plane"></i> Test
+                </button>
+            </div>
+        </section>
+
+        <!-- Quick Alarm / Countdown Bar -->
+        <section class="bg-ocean-800 border border-ocean-700 rounded-2xl p-4 shadow-xl">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-semibold text-white flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-stopwatch text-cyan-400"></i> Quick In-X-Minutes Alarm
+                </h2>
+                <span class="text-xs text-ocean-300">Instant Timer</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2 mb-3">
+                <button onclick="quickTimer(1)" class="bg-ocean-700/80 hover:bg-ocean-700 border border-ocean-600 rounded-xl py-2 text-xs font-semibold text-cyan-300 transition">1 min</button>
+                <button onclick="quickTimer(5)" class="bg-ocean-700/80 hover:bg-ocean-700 border border-ocean-600 rounded-xl py-2 text-xs font-semibold text-cyan-300 transition">5 mins</button>
+                <button onclick="quickTimer(15)" class="bg-ocean-700/80 hover:bg-ocean-700 border border-ocean-600 rounded-xl py-2 text-xs font-semibold text-cyan-300 transition">15 mins</button>
+                <button onclick="quickTimer(30)" class="bg-ocean-700/80 hover:bg-ocean-700 border border-ocean-600 rounded-xl py-2 text-xs font-semibold text-cyan-300 transition">30 mins</button>
+            </div>
+            <div id="activeQuickTimer" class="hidden text-xs bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 rounded-xl p-2.5 flex items-center justify-between">
+                <span id="quickTimerStatus" class="flex items-center gap-2"><i class="fa-solid fa-circle-notch fa-spin"></i> Timer active...</span>
+                <button onclick="cancelQuickTimer()" class="text-red-400 hover:text-red-300 font-medium"><i class="fa-solid fa-xmark"></i> Cancel</button>
+            </div>
+        </section>
+
+        <!-- Notification Schedules Section -->
+        <section class="space-y-3">
+            <div class="flex items-center justify-between px-1">
+                <h2 class="font-semibold text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-clock text-cyan-400"></i> Custom Schedules
+                </h2>
+                <button onclick="openModal()" class="text-xs bg-ocean-700 hover:bg-ocean-600 border border-ocean-600 text-cyan-400 font-medium px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> Add Schedule
+                </button>
+            </div>
+
+            <!-- Schedule List Container -->
+            <div id="scheduleList" class="space-y-3">
+                <!-- Dynamically populated or empty state -->
+            </div>
+        </section>
+
+        <!-- Live In-App Notification Log / Toast Container -->
+        <section class="space-y-2">
+            <div class="flex items-center justify-between px-1">
+                <h2 class="font-semibold text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-list-ul text-cyan-400"></i> Recent Triggers Log
+                </h2>
+                <button onclick="clearLogs()" class="text-xs text-ocean-400 hover:text-ocean-200 transition">Clear Log</button>
+            </div>
+            <div id="logContainer" class="bg-ocean-800/60 border border-ocean-700/80 rounded-2xl p-3 space-y-2 max-h-48 overflow-y-auto text-xs">
+                <div class="text-ocean-400 text-center py-4">No recent notification logs yet.</div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="scheduleModal" class="fixed inset-0 z-50 bg-ocean-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 hidden transition-opacity">
+        <div class="bg-ocean-800 border border-ocean-700 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-200">
+            <div class="flex items-center justify-between border-b border-ocean-700 pb-3">
+                <h3 id="modalTitle" class="font-bold text-white text-base">New Schedule</h3>
+                <button onclick="closeModal()" class="text-ocean-400 hover:text-white p-1 rounded-lg text-sm"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="scheduleForm" onsubmit="saveSchedule(event)" class="space-y-4">
+                <input type="hidden" id="editIndex" value="-1">
+                
+                <div>
+                    <label class="block text-xs font-medium text-ocean-300 mb-1.5">Notification Title</label>
+                    <input type="text" id="notifTitle" required placeholder="e.g. Drink Water, Stretch, Take Meds" class="w-full bg-ocean-900 border border-ocean-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-ocean-300 mb-1.5">Message Body</label>
+                    <input type="text" id="notifBody" required placeholder="e.g. Time to stand up and walk around!" class="w-full bg-ocean-900 border border-ocean-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-ocean-300 mb-1.5">Trigger Time</label>
+                        <input type="time" id="notifTime" required class="w-full bg-ocean-900 border border-ocean-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-ocean-300 mb-1.5">Sound / Alert Type</label>
+                        <select id="notifSound" class="w-full bg-ocean-900 border border-ocean-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                            <option value="chime">Gentle Chime</option>
+                            <option value="beep">Digital Beep</option>
+                            <option value="none">Silent</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-ocean-300 mb-1.5">Repeat Days</label>
+                    <div class="grid grid-cols-7 gap-1">
+                        <label class="flex flex-col items-center justify-center bg-ocean-900 border border-ocean-700 rounded-lg p-1.5 cursor-pointer hover:border-cyan-500 transition text-[10px] text-ocean-300 select-none">
+                            <input type="checkbox" name="days" value="1" class="accent-cyan-500 mb-1"> Mon
+                        </label>
+                        <label class="flex flex-col items-center justify-center bg-ocean-900 border border-ocean-700 rounded-lg p-1.5 cursor-pointer hover:border-cyan-500 transition text-[10px] text-ocean-300 select-none">
+                            <input type="checkbox" name="days" value="2" class="accent-cyan-500 mb-1"> Tue
+                        </label>
+                        <label class="flex flex-col items-center justify-center bg-ocean-900 border border-ocean-700 rounded-lg p-1.5 cursor-pointer hover:border-cyan-500 transition text-[10px] text-ocean-300 select-none">
+                            <input type="checkbox" name="days" value="3" class="accent-cyan-500 mb-1"> Wed
+                        </label>
+                        <label class="flex flex-col items-center justify-center bg-ocean-900 border border-ocean-700 rounded-lg p-1.5 cursor-pointer hover:border-cyan-500 transition text-[10px] text-ocean-300 select-none">
+                            <input type="checkbox" name="days" value="4" class="accent-cyan-500 mb-1"> Thu
+                        </label>
+                        <label class="flex flex-col items-center justify-center bg-ocean-900 border border-ocean-700 rounded-lg p-1.5 cursor-pointer hover:border-cyan-500 transition text-[10px] text-ocean-300 select-none">
+                            <input type="checkbox" name="days" value="5" class="accent-cyan-500 mb-1"> Fri
+                        </label>
+                        <label class="flex flex-col items-center justify-center bg-ocean-900 border border-ocean-700 rounded-lg p-1.5 cursor-pointer hover:border-cyan-500 transition text-[10px] text-ocean-300 select-none">
+                            <input type="checkbox" name="days" value="6" class="accent-cyan-500 mb-1"> Sat
+                        </label>
+                        <label class="flex flex-col items-center justify-center bg-ocean-900 border border-ocean-700 rounded-lg p-1.5 cursor-pointer hover:border-cyan-500 transition text-[10px] text-ocean-300 select-none">
+                            <input type="checkbox" name="days" value="0" class="accent-cyan-500 mb-1"> Sun
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-ocean-700 hover:bg-ocean-600 text-ocean-200 font-medium py-2.5 rounded-xl text-sm transition">Cancel</button>
+                    <button type="submit" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-ocean-900 font-semibold py-2.5 rounded-xl text-sm transition">Save Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="fixed top-16 left-4 right-4 z-50 pointer-events-none flex flex-col space-y-2 items-center"></div>
+
+    <script>
+        // State storage
+        let schedules = JSON.parse(localStorage.getItem('notiping_schedules')) || [
+            { id: 1, title: 'Morning Stretch', body: 'Time for a quick 5-minute stretch to start the day!', time: '08:00', days: [1,2,3,4,5], enabled: true, sound: 'chime' },
+            { id: 2, title: 'Hydration Check', body: 'Drink a full glass of water!', time: '14:30', days: [0,1,2,3,4,5,6], enabled: true, sound: 'beep' }
+        ];
+        let logs = JSON.parse(localStorage.getItem('notiping_logs')) || [];
+        let quickTimerTimeout = null;
+        let quickTimerInterval = null;
+
+        // Initialize app on load
+        window.onload = function() {
+            checkPermissionStatus();
+            renderSchedules();
+            renderLogs();
+            
+            // Start background clock checker (every 1 second for precise testing)
+            setInterval(checkScheduledNotifications, 1000);
+        };
+
+        // Check browser notification permission
+        function checkPermissionStatus() {
+            const badge = document.getElementById('permissionBadge');
+            const dot = document.getElementById('permissionDot');
+            const text = document.getElementById('permissionText');
+            const reqBtn = document.getElementById('requestBtn');
+            const card = document.getElementById('permissionCard');
+
+            if (!("Notification" in window)) {
+                dot.className = "w-2 h-2 rounded-full bg-red-500";
+                text.innerText = "Not Supported";
+                reqBtn.disabled = true;
+                reqBtn.innerText = "Notifications Unsupported";
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+                text.innerText = "Allowed";
+                card.classList.add('border-emerald-500/40');
+                reqBtn.innerHTML = '<i class="fa-solid fa-check"></i> Notifications Enabled';
+                reqBtn.classList.remove('from-cyan-500', 'to-cyan-600', 'hover:from-cyan-400', 'hover:to-cyan-400');
+                reqBtn.classList.add('bg-emerald-600/30', 'text-emerald-300', 'border', 'border-emerald-500/50', 'cursor-default');
+                reqBtn.onclick = null;
+            } else if (Notification.permission === "denied") {
+                dot.className = "w-2 h-2 rounded-full bg-red-500";
+                text.innerText = "Blocked";
+                card.classList.add('border-red-500/40');
+                reqBtn.innerText = "Permission Blocked in Browser";
+                reqBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                reqBtn.onclick = () => showToast("Permission Blocked", "Please enable notifications in your browser site settings.", "error");
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-amber-400";
+                text.innerText = "Not Enabled";
+            }
+        }
+
+        // Request browser permission
+        async function requestPermission() {
+            if (!("Notification" in window)) {
+                showToast("Unsupported", "Your browser does not support desktop/mobile notifications.", "error");
+                return;
+            }
+            try {
+                const permission = await Notification.requestPermission();
+                checkPermissionStatus();
+                if (permission === "granted") {
+                    showToast("Success!", "Notifications successfully enabled for your device.", "success");
+                    new Notification("NotiPing Test", { body: "Notifications are now fully active!" });
+                } else {
+                    showToast("Permission Denied", "You can enable notifications anytime in your browser settings.", "warning");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Trigger immediate test notification
+        function triggerImmediateTest() {
+            const title = "Immediate Test Alert 🚀";
+            const body = "This is a test notification fired right from NotiPing!";
+            
+            // Show in-app banner toast
+            showToast(title, body, "info");
+            
+            // Add to log
+            addLog(title, body);
+
+            // Trigger system notification if permitted
+            if ("Notification" in window && Notification.permission === "granted") {
+                try {
+                    if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                        navigator.serviceWorker.ready.then(reg => {
+                            reg.showNotification(title, {
+                                body: body,
+                                icon: 'https://placehold.co/192x192/0c1b2a/22d3ee?text=N',
+                                badge: 'https://placehold.co/96x96/0c1b2a/22d3ee?text=N',
+                                vibrate: [200, 100, 200]
+                            });
+                        });
+                    } else {
+                        new Notification(title, { body });
+                    }
+                } catch (err) {
+                    console.log("System notification fallback:", err);
+                }
+            }
+            playAudioSound('chime');
+        }
+
+        // Quick timer function
+        function quickTimer(minutes) {
+            if (quickTimerTimeout) {
+                clearTimeout(quickTimerTimeout);
+                clearInterval(quickTimerInterval);
+            }
+
+            let secondsLeft = minutes * 60;
+            const activeBox = document.getElementById('activeQuickTimer');
+            const statusText = document.getElementById('quickTimerStatus');
+            activeBox.classList.remove('hidden');
+
+            const updateDisplay = () => {
+                const m = Math.floor(secondsLeft / 60);
+                const s = secondsLeft % 60;
+                statusText.innerHTML = `<i class="fa-solid fa-stopwatch animate-spin text-cyan-400"></i> Timer: <b>${m}:${s < 10 ? '0' : ''}${s}</b> remaining`;
+            };
+
+            updateDisplay();
+            quickTimerInterval = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft <= 0) {
+                    clearInterval(quickTimerInterval);
+                } else {
+                    updateDisplay();
+                }
+            }, 1000);
+
+            quickTimerTimeout = setTimeout(() => {
+                activeBox.classList.add('hidden');
+                triggerImmediateTest();
+                showToast("Quick Timer Complete!", `Your ${minutes}-minute timer has finished.`, "success");
+            }, minutes * 60 * 1000);
+
+            showToast("Timer Started", `Notification will trigger in ${minutes} minute(s).`, "info");
+        }
+
+        function cancelQuickTimer() {
+            if (quickTimerTimeout) {
+                clearTimeout(quickTimerTimeout);
+                clearInterval(quickTimerInterval);
+                quickTimerTimeout = null;
+                document.getElementById('activeQuickTimer').classList.add('hidden');
+                showToast("Timer Cancelled", "Quick timer was stopped.", "warning");
+            }
+        }
+
+        // Modal Controls
+        function openModal(index = -1) {
+            const modal = document.getElementById('scheduleModal');
+            const titleEl = document.getElementById('modalTitle');
+            const form = document.getElementById('scheduleForm');
+            
+            form.reset();
+            document.getElementById('editIndex').value = index;
+
+            if (index >= 0) {
+                titleEl.innerText = "Edit Schedule";
+                const s = schedules[index];
+                document.getElementById('notifTitle').value = s.title;
+                document.getElementById('notifBody').value = s.body;
+                document.getElementById('notifTime').value = s.time;
+                document.getElementById('notifSound').value = s.sound || 'chime';
+                
+                const checkboxes = form.querySelectorAll('input[name="days"]');
+                checkboxes.forEach(cb => {
+                    cb.checked = s.days.includes(parseInt(cb.value));
+                });
+            } else {
+                titleEl.innerText = "New Schedule";
+                // Set default current time + 5 mins
+                const now = new Date();
+                now.setMinutes(now.getMinutes() + 5);
+                const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                document.getElementById('notifTime').value = timeStr;
+                
+                // Select all days by default
+                form.querySelectorAll('input[name="days"]').forEach(cb => cb.checked = true);
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('scheduleModal').classList.add('hidden');
+        }
+
+        // Save Schedule
+        function saveSchedule(e) {
+            e.preventDefault();
+            const index = parseInt(document.getElementById('editIndex').value);
+            const title = document.getElementById('notifTitle').value;
+            const body = document.getElementById('notifBody').value;
+            const time = document.getElementById('notifTime').value;
+            const sound = document.getElementById('notifSound').value;
+            
+            const days = [];
+            document.querySelectorAll('input[name="days"]:checked').forEach(cb => {
+                days.push(parseInt(cb.value));
+            });
+
+            if (days.length === 0) {
+                showToast("Select Days", "Please select at least one repeat day.", "warning");
+                return;
+            }
+
+            const newSchedule = {
+                id: index >= 0 ? schedules[index].id : Date.now(),
+                title,
+                body,
+                time,
+                days,
+                sound,
+                enabled: index >= 0 ? schedules[index].enabled : true,
+                lastTriggeredDate: null
+            };
+
+            if (index >= 0) {
+                schedules[index] = newSchedule;
+                showToast("Updated", "Schedule successfully updated.", "success");
+            } else {
+                schedules.push(newSchedule);
+                showToast("Created", "New notification schedule added.", "success");
+            }
+
+            saveAndRender();
+            closeModal();
+        }
+
+        function toggleSchedule(index) {
+            schedules[index].enabled = !schedules[index].enabled;
+            saveAndRender();
+            showToast("Status Changed", `Schedule is now ${schedules[index].enabled ? 'Enabled' : 'Disabled'}.`, "info");
+        }
+
+        function deleteSchedule(index) {
+            if (confirm("Are you sure you want to delete this schedule?")) {
+                schedules.splice(index, 1);
+                saveAndRender();
+                showToast("Deleted", "Schedule removed.", "warning");
+            }
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('notiping_schedules', JSON.stringify(schedules));
+            renderSchedules();
+        }
+
+        // Render Schedules List
+        function renderSchedules() {
+            const container = document.getElementById('scheduleList');
+            if (schedules.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-ocean-800/40 border border-ocean-700/60 rounded-2xl p-6 text-center text-ocean-400 text-xs space-y-2">
+                        <i class="fa-regular fa-calendar-xmark text-2xl text-ocean-500"></i>
+                        <p>No schedules configured yet. Tap "Add Schedule" to create one.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+            container.innerHTML = schedules.map((s, idx) => {
+                const daysStr = s.days.length === 7 ? 'Every day' : s.days.map(d => dayNames[d]).join(', ');
+                
+                return `
+                    <div class="bg-ocean-800 border ${s.enabled ? 'border-ocean-700' : 'border-ocean-700/40 opacity-60'} rounded-2xl p-4 shadow-md transition flex items-center justify-between gap-3">
+                        <div class="space-y-1 flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-white text-sm truncate">${escapeHtml(s.title)}</span>
+                                <span class="text-xs px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 font-mono font-semibold">${s.time}</span>
+                            </div>
+                            <p class="text-xs text-ocean-300 truncate">${escapeHtml(s.body)}</p>
+                            <div class="text-[11px] text-ocean-400 flex items-center gap-1">
+                                <i class="fa-regular fa-calendar"></i> ${daysStr}
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-2">
+                            <!-- Toggle switch -->
+                            <button onclick="toggleSchedule(${idx})" class="w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ease-in-out ${s.enabled ? 'bg-cyan-500' : 'bg-ocean-700'}">
+                                <div class="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${s.enabled ? 'translate-x-5' : 'translate-x-0'}"></div>
+                            </button>
+
+                            <!-- Edit button -->
+                            <button onclick="openModal(${idx})" class="w-8 h-8 rounded-xl bg-ocean-700 hover:bg-ocean-600 text-ocean-200 flex items-center justify-center text-xs transition" title="Edit">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+
+                            <!-- Delete button -->
+                            <button onclick="deleteSchedule(${idx})" class="w-8 h-8 rounded-xl bg-ocean-700 hover:bg-red-500/20 text-ocean-400 hover:text-red-400 flex items-center justify-center text-xs transition" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Background Check for scheduled alerts
+        function checkScheduledNotifications() {
+            const now = new Date();
+            const currentHours = String(now.getHours()).padStart(2, '0');
+            const currentMinutes = String(now.getMinutes()).padStart(2, '0');
+            const currentTimeStr = `${currentHours}:${currentMinutes}`;
+            const currentDay = now.getDay();
+            const todayDateStr = now.toISOString().split('T')[0];
+
+            schedules.forEach((s, idx) => {
+                if (!s.enabled) return;
+                if (!s.days.includes(currentDay)) return;
+
+                if (s.time === currentTimeStr) {
+                    // Check if already triggered today at this minute
+                    if (s.lastTriggeredDate === `${todayDateStr}_${currentTimeStr}`) return;
+
+                    // Trigger!
+                    s.lastTriggeredDate = `${todayDateStr}_${currentTimeStr}`;
+                    saveAndRender();
+
+                    showToast(s.title, s.body, "success");
+                    addLog(s.title, s.body);
+
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        try {
+                            new Notification(s.title, { body: s.body });
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }
+                    playAudioSound(s.sound);
+                }
+            });
+        }
+
+        // Sound generator using Web Audio API (no external asset needed)
+        function playAudioSound(type) {
+            if (type === 'none') return;
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+
+                if (type === 'chime') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3); // A5
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.6);
+                } else if (type === 'beep') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.2);
+                }
+            } catch (err) {
+                console.log("Audio playback note:", err);
+            }
+        }
+
+        // Toast Notification System
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-ocean-800 border-ocean-600 text-white';
+            let icon = 'fa-circle-info text-cyan-400';
+            if (type === 'success') {
+                bgClass = 'bg-ocean-800 border-emerald-500/50 text-white';
+                icon = 'fa-circle-check text-emerald-400';
+            } else if (type === 'warning' || type === 'error') {
+                bgClass = 'bg-ocean-800 border-amber-500/50 text-white';
+                icon = 'fa-triangle-exclamation text-amber-400';
+            }
+
+            toast.className = `pointer-events-auto w-full max-w-sm ${bgClass} border rounded-2xl p-4 shadow-2xl flex items-start gap-3 transform translate-y-[-20px] opacity-0 transition-all duration-300`;
+            toast.innerHTML = `
+                <div class="text-lg mt-0.5"><i class="fa-solid ${icon}"></i></div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-bold text-xs text-white">${escapeHtml(title)}</h4>
+                    <p class="text-xs text-ocean-200 mt-0.5">${escapeHtml(message)}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-ocean-400 hover:text-white"><i class="fa-solid fa-xmark text-xs"></i></button>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-y-[-20px]', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-20px]', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4500);
+        }
+
+        // Log Management
+        function addLog(title, body) {
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            logs.unshift({ title, body, time: timeStr });
+            if (logs.length > 25) logs.pop();
+            localStorage.setItem('notiping_logs', JSON.stringify(logs));
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logContainer');
+            if (logs.length === 0) {
+                container.innerHTML = `<div class="text-ocean-400 text-center py-4">No recent notification logs yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = logs.map(l => `
+                <div class="bg-ocean-900/60 border border-ocean-700/50 rounded-xl p-2.5 flex items-start justify-between gap-2">
+                    <div>
+                        <span class="font-semibold text-white">${escapeHtml(l.title)}</span>
+                        <p class="text-ocean-300 text-[11px]">${escapeHtml(l.body)}</p>
+                    </div>
+                    <span class="text-[10px] text-ocean-400 font-mono whitespace-nowrap">${l.time}</span>
+                </div>
+            `).join('');
+        }
+
+        function clearLogs() {
+            logs = [];
+            localStorage.removeItem('notiping_logs');
+            renderLogs();
+            showToast("Log Cleared", "Notification history cleared.", "info");
+        }
+
+        // HTML Escape Helper
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
